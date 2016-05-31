@@ -8,29 +8,27 @@ import numpy as np
 import sys
 import argparse
 
-#Pega as coisas da linha de comando
+# Parser para os argumentos da linha de comando
 parser = argparse.ArgumentParser(description='AGGCID')
+
 parser.add_argument('filename', metavar='FILE', type=str, help='Nome do arquivo')
-
 parser.add_argument('-i', dest='invert',action='store_true', help='inverter')
-
-parser.add_argument('-a', dest='alfa', metavar='ALFA', type=float, default=0.5, help='alfa (padrao 0,5')
+parser.add_argument('-a', dest='alfa', metavar='ALFA', type=float, default=0.5, help='alfa (padrao 0.5)')
 
 args = parser.parse_args()
 
-
-# Abre e converte para grayscale
+# Abre a imagem em RGB
 imagem = Image.open(args.filename).convert('RGB')
-
+# Mostra a imagem
 imagem.show()
     
-
+# Inverte a imagem para realizar realce para imagem clara
 if(args.invert):
     inverted_image = ImageOps.invert(imagem)
     inverted_image.show()
     imagem = inverted_image
 
-# Converte pra array
+# Converte imagem para array
 img = array(imagem)
 
 # Separar os 3 canais
@@ -84,22 +82,34 @@ for i in niveis:
 
 # print(cdfw)
 
+# Calcula os novos niveis
+novo_nivel_r = []
+novo_nivel_g = []
+novo_nivel_b = []
+for i in niveis:
+    novo_nivel_r.append(pow((float(i)/255), (1-float(cdfw_r[i])))*255)
+    novo_nivel_g.append(pow((float(i)/255), (1-float(cdfw_g[i])))*255)
+    novo_nivel_b.append(pow((float(i)/255), (1-float(cdfw_b[i])))*255)
+
 # Edita a imagem
 m, n = r.shape
 for i in range(m):
     for j in range(n):
-        r[i][j] = pow((float(r[i][j])/255), (1-float(cdfw_r[r[i][j]])))*255
-        g[i][j] = pow((float(g[i][j])/255), (1-float(cdfw_g[g[i][j]])))*255
-        b[i][j] = pow((float(b[i][j])/255), (1-float(cdfw_b[b[i][j]])))*255
+        r[i][j] = novo_nivel_r[r[i][j]]
+        g[i][j] = novo_nivel_g[g[i][j]]
+        b[i][j] = novo_nivel_b[b[i][j]]
 
+# Cria nova imagem
 img2 = np.empty(img.shape, dtype=np.uint8)
 img2[:, :, 0] = r
 img2[:, :, 1] = g
 img2[:, :, 2] = b
 
+# Mostra nova imagem
 imagem2 = Image.fromarray(img2)
 imagem2.show()
 if(args.invert):
     ImageOps.invert(imagem2).show()
+
 # pdf, niveis = histogram(img.flatten(), 256, (0, 256))
 # print(pdf)
