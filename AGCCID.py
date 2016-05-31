@@ -1,21 +1,35 @@
 from PIL import Image
-# from PIL import ImageOps
+from PIL import ImageOps
 from pylab import (
     array,
     histogram
 )
 import numpy as np
+import sys
+import argparse
+
+#Pega as coisas da linha de comando
+parser = argparse.ArgumentParser(description='AGGCID')
+parser.add_argument('filename', metavar='FILE', type=str, help='Nome do arquivo')
+
+parser.add_argument('-i', dest='invert',action='store_true', help='inverter')
+
+parser.add_argument('-a', dest='alfa', metavar='ALFA', type=float, default=0.5, help='alfa (padrao 0,5')
+
+args = parser.parse_args()
+
 
 # Abre e converte para grayscale
-imagem = Image.open('low-contrast.jpg').convert('RGB')
-# imagem = Image.open('download.jpg').convert('RGB')
-# imagem = Image.open('bad_contrast.jpg').convert('RGB')
+imagem = Image.open(args.filename).convert('RGB')
 
 imagem.show()
+    
 
-# inverted_image = ImageOps.invert(imagem)
-# inverted_image.show()
-# imagem = inverted_image
+if(args.invert):
+    inverted_image = ImageOps.invert(imagem)
+    inverted_image.show()
+    imagem = inverted_image
+
 # Converte pra array
 img = array(imagem)
 
@@ -36,7 +50,7 @@ niveis = range(256)
 pdfw_r = []
 pdfw_g = []
 pdfw_b = []
-alfa = 0.5
+alfa = args.alfa
 for i in niveis:
     pdfw_r.append(
         pow((float(pdf_r[i])-pdf_r.min())/(pdf_r.max()-pdf_r.min()), alfa) *
@@ -53,14 +67,17 @@ for i in niveis:
 cdfw_r = []
 cdfw_g = []
 cdfw_b = []
+sum_pdfw_r = sum(pdfw_r)
+sum_pdfw_g = sum(pdfw_g)
+sum_pdfw_b = sum(pdfw_b)
 for i in niveis:
     c_r = 0
     c_g = 0
     c_b = 0
     for j in range(i+1):
-        c_r += pdfw_r[j]/sum(pdfw_r)
-        c_g += pdfw_g[j]/sum(pdfw_g)
-        c_b += pdfw_b[j]/sum(pdfw_b)
+        c_r += pdfw_r[j]/sum_pdfw_r
+        c_g += pdfw_g[j]/sum_pdfw_g
+        c_b += pdfw_b[j]/sum_pdfw_b
     cdfw_r.append(c_r)
     cdfw_g.append(c_g)
     cdfw_b.append(c_b)
@@ -82,6 +99,7 @@ img2[:, :, 2] = b
 
 imagem2 = Image.fromarray(img2)
 imagem2.show()
-# ImageOps.invert(imagem2).show()
+if(args.invert):
+    ImageOps.invert(imagem2).show()
 # pdf, niveis = histogram(img.flatten(), 256, (0, 256))
 # print(pdf)
