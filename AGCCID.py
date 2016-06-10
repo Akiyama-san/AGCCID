@@ -5,15 +5,39 @@ from pylab import (
     histogram
 )
 import numpy as np
-import sys
 import argparse
+import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+
+
+def plot_hist(original, nova):
+    fig = plt.figure()
+    fig.suptitle('Histogramas')
+    gs = gridspec.GridSpec(1, 2)
+    hist_original = plt.subplot(gs[0, 0])
+    hist_nova = plt.subplot(gs[0, 1])
+
+    hist_original.set_xlim(0, 255)
+    hist_nova.set_xlim(0, 255)
+    hist_original.set_title('Imagem Original')
+    hist_nova.set_title('Imagem Melhorada')
+
+    fig.add_subplot(hist_original)
+    fig.add_subplot(hist_nova)
+    hist_original.hist(array(original.convert('L')))
+    hist_nova.hist(array(nova.convert('L')))
+    plt.ion()
+    plt.show()
+
 
 # Parser para os argumentos da linha de comando
 parser = argparse.ArgumentParser(description='AGGCID')
 
-parser.add_argument('filename', metavar='FILE', type=str, help='Nome do arquivo')
-parser.add_argument('-i', dest='invert',action='store_true', help='inverter')
-parser.add_argument('-a', dest='alfa', metavar='ALFA', type=float, default=0.5, help='alfa (padrao 0.5)')
+parser.add_argument('filename', metavar='FILE', type=str,
+                    help='Nome do arquivo')
+parser.add_argument('-i', dest='invert', action='store_true', help='inverter')
+parser.add_argument('-a', dest='alfa', metavar='ALFA', type=float, default=0.5,
+                    help='alfa (padrao 0.5)')
 
 args = parser.parse_args()
 
@@ -21,11 +45,10 @@ args = parser.parse_args()
 imagem = Image.open(args.filename).convert('RGB')
 # Mostra a imagem
 imagem.show()
-    
+
 # Inverte a imagem para realizar realce para imagem clara
 if(args.invert):
     inverted_image = ImageOps.invert(imagem)
-    inverted_image.show()
     imagem = inverted_image
 
 # Converte imagem para array
@@ -42,8 +65,6 @@ pdf_g, niveis = histogram(g.flatten(), 256, (0, 256))
 pdf_b, niveis = histogram(b.flatten(), 256, (0, 256))
 niveis = range(256)
 
-# print(pdf)
-
 # Calcula as probabilidades com peso
 pdfw_r = []
 pdfw_g = []
@@ -59,7 +80,6 @@ for i in niveis:
     pdfw_b.append(
         pow((float(pdf_b[i])-pdf_b.min())/(pdf_b.max()-pdf_b.min()), alfa) *
         pdf_b.max())
-# print(pdfw)
 
 # Calcula CDFw
 cdfw_r = []
@@ -79,8 +99,6 @@ for i in niveis:
     cdfw_r.append(c_r)
     cdfw_g.append(c_g)
     cdfw_b.append(c_b)
-
-# print(cdfw)
 
 # Calcula os novos niveis
 novo_nivel_r = []
@@ -107,9 +125,12 @@ img2[:, :, 2] = b
 
 # Mostra nova imagem
 imagem2 = Image.fromarray(img2)
-imagem2.show()
+
 if(args.invert):
     ImageOps.invert(imagem2).show()
+    plot_hist(ImageOps.invert(imagem), ImageOps.invert(imagem2))
+else:
+    imagem2.show()
+    plot_hist(imagem, imagem2)
 
-# pdf, niveis = histogram(img.flatten(), 256, (0, 256))
-# print(pdf)
+raw_input("Press Enter to continue...")
